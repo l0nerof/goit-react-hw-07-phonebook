@@ -3,13 +3,24 @@ import ContactForm from './contactForm/ContactForm';
 import ContactList from './contactList/ContactList';
 import Filter from './filter/Filter';
 import { useSelector, useDispatch } from 'react-redux';
-import { addContact, deleteContact } from '../redux/contactsSlice';
+import {
+  addContactAsync,
+  deleteContactAsync,
+  fetchContactsAsync,
+} from '../redux/contactsSlice';
 import { setFilter } from '../redux/filterSlice';
+import { useEffect } from 'react';
 
 export function App() {
-  const contacts = useSelector(state => state.contacts);
+  const contacts = useSelector(state => state.contacts.items);
   const filter = useSelector(state => state.filter);
+  const isLoading = useSelector(state => state.contacts.isLoading);
+  const error = useSelector(state => state.contacts.error);
   const dispatch = useDispatch();
+
+  useEffect(() => {
+    dispatch(fetchContactsAsync());
+  }, [dispatch]);
 
   const handleSubmit = (name, number) => {
     if (
@@ -27,7 +38,7 @@ export function App() {
       number,
     };
 
-    dispatch(addContact(newContact));
+    dispatch(addContactAsync(newContact));
   };
 
   const handleFilterChange = event => {
@@ -43,7 +54,7 @@ export function App() {
   };
 
   const handleDeleteContact = contactId => {
-    dispatch(deleteContact(contactId));
+    dispatch(deleteContactAsync(contactId));
   };
 
   return (
@@ -52,10 +63,16 @@ export function App() {
       <ContactForm handleSubmit={handleSubmit} />
       <h2>Contacts</h2>
       <Filter filter={filter} handleChange={handleFilterChange} />
-      <ContactList
-        contacts={getFilteredContacts()}
-        handleDeleteContact={handleDeleteContact}
-      />
+      {isLoading ? (
+        <div>Loading...</div>
+      ) : error ? (
+        <div>Error: {error}</div>
+      ) : (
+        <ContactList
+          contacts={getFilteredContacts()}
+          handleDeleteContact={handleDeleteContact}
+        />
+      )}
     </div>
   );
 }
